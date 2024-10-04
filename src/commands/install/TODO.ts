@@ -1,4 +1,5 @@
-import { InstallationPlan } from "../../types";
+import { InstallationPlan } from '../../types';
+import { resolveDependencies } from '../../util/resolveDependencies';
 
 /**
  *
@@ -9,10 +10,13 @@ export async function constructInstallationPlan(
   topLevelDependencies: Record<string, string>
 ): Promise<InstallationPlan> {
   // TODO -> Determine the full list of dependencies to download
-  return [
-    {
-      name: "is-thirteen",
-      version: "2.0.0",
-    },
-  ];
+  const installationPlan: InstallationPlan = [];
+
+  for (const [packageName, versionRange] of Object.entries(
+    topLevelDependencies
+  )) {
+    await resolveDependencies(packageName, versionRange, installationPlan);
+  }
+
+  return installationPlan;
 }
