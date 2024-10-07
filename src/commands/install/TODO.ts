@@ -1,5 +1,6 @@
 import { InstallationPlan } from '../../types';
 import { resolveDependencies } from '../../util/resolveDependencies';
+import { saveLockFile, readLockFile } from '../../util/lockfile';
 
 /**
  *
@@ -9,7 +10,15 @@ import { resolveDependencies } from '../../util/resolveDependencies';
 export async function constructInstallationPlan(
   topLevelDependencies: Record<string, string>
 ): Promise<InstallationPlan> {
-  // TODO -> Determine the full list of dependencies to download
+  // Check if a lock file already exists for reproducible installs
+  const cachedPlan = readLockFile();
+
+  if (cachedPlan) {
+    console.log('Using installation plan from lock file.');
+    return cachedPlan;
+  }
+
+  // If no lock file exists, create new installation plan and proceed to resolve dependencies
   const installationPlan: InstallationPlan = [];
 
   for (const [packageName, versionRange] of Object.entries(
@@ -17,6 +26,9 @@ export async function constructInstallationPlan(
   )) {
     await resolveDependencies(packageName, versionRange, installationPlan);
   }
+
+  // Save the installation plan to a lock file for future reproducible installs
+  saveLockFile(installationPlan);
 
   return installationPlan;
 }
